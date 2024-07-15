@@ -1,0 +1,21 @@
+name: image-package
+functions:
+  - name: image-handler.detect
+    type: TASK
+    provision:
+      knative:
+        image: kjuahn1997/image-package
+classes:
+  - name: image-hanlder
+    stateType: FILES
+    objectType: SIMPLE
+    parents: ['builtin.base']
+    stateSpec:
+      keySpecs:
+        - name: image
+          access: PUBLIC
+    functions:
+      - function: .image-handler.detect
+        name: detect
+        access: PUBLIC
+      

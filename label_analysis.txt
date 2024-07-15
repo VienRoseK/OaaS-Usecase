@@ -1,0 +1,5 @@
+person (class id 0) center_x: 0.0419753, center_y: 0.660648, width: 0.0839506, height: 0.299074
+bus (class id 5) center_x: 0.508025, center_y: 0.468519, width: 0.983951, height: 0.524074
+person (class id 0) center_x: 0.183333, center_y: 0.602778, width: 0.245679, height: 0.483333
+person (class id 0) center_x: 0.35, center_y: 0.590278, width: 0.154321, height: 0.425
+person (class id 0) center_x: 0.914815, center_y: 0.589352, width: 0.17037, height: 0.447222
