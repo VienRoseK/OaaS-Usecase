@@ -1,4 +1,4 @@
-=  Python Function Template for Oparaca Platform
+=  OaaS Use-Case: Object Detecting and Structured Data Analysis Using YOLOv5
 :toc:
 :toc-placement: preamble
 :toclevels: 2
@@ -40,29 +40,29 @@ pip install -r requirements.txt
 python main.py
 ----
 
-. Apply `pkg.yml` via `ocli`
+. Apply `package.yaml` via `ocli`
 +
 [source,bash]
 ----
-ocli dev pa pkg.yml
+ocli dev pa packag.yaml
 ----
 
 . Create a new object
 +
 [source,bash]
 ----
-ocli dev object-create example.greeter -s
+ocli dev oc image-package.image-hanlder -s -f image=yolov5/data/images/bus.jpg
 ----
 +
-NOTE: With `-s`, the ID of new object will be saved locally to be used by next command.
+NOTE: With `-s`, the ID of new object will be saved locally to be used by next command. Also, it assumes that the Yolov5 package has been successfully included in the use-case local directory. 
 
-. Invoke the `greet` function of `greeter` object
+. Invoke the 'detect' function
 +
 [source,bash]
 ----
-ocli dev invoke greet
+ocli dev invoke detect
 #OR
-ocli dev invoke -m "<ID of object>" greet
+ocli dev invoke -m "<ID of object>" detect
 ----
 
 == More Info
