@@ -6,26 +6,12 @@ import uuid
 
 
 
-from yolov5 import detect
+from ultralytics import YOLO
 from fastapi import Request, FastAPI, HTTPException
 from oaas_sdk_py import OaasInvocationCtx
 import os
 
-# Class name dictionary for analyzing the objects 
-COCO_CLASSES = {
-    0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 4: 'airplane', 5: 'bus', 6: 'train',
-    7: 'truck', 8: 'boat', 9: 'traffic light', 10: 'fire hydrant', 11: 'stop sign', 12: 'parking meter',
-    13: 'bench', 14: 'bird', 15: 'cat', 16: 'dog', 17: 'horse', 18: 'sheep', 19: 'cow', 20: 'elephant',
-    21: 'bear', 22: 'zebra', 23: 'giraffe', 24: 'backpack', 25: 'umbrella', 26: 'handbag', 27: 'tie',
-    28: 'suitcase', 29: 'frisbee', 30: 'skis', 31: 'snowboard', 32: 'sports ball', 33: 'kite',
-    34: 'baseball bat', 35: 'baseball glove', 36: 'skateboard', 37: 'surfboard', 38: 'tennis racket',
-    39: 'bottle', 40: 'wine glass', 41: 'cup', 42: 'fork', 43: 'knife', 44: 'spoon', 45: 'bowl',
-    46: 'banana', 47: 'apple', 48: 'sandwich', 49: 'orange', 50: 'broccoli', 51: 'carrot', 52: 'hot dog',
-    53: 'pizza', 54: 'donut', 55: 'cake', 56: 'chair', 57: 'couch', 58: 'potted plant', 59: 'bed',
-    60: 'dining table', 61: 'toilet', 62: 'tv', 63: 'laptop', 64: 'mouse', 65: 'remote', 66: 'keyboard',
-    67: 'cell phone', 68: 'microwave', 69: 'oven', 70: 'toaster', 71: 'sink', 72: 'refrigerator',
-    73: 'book', 74: 'clock', 75: 'vase', 76: 'scissors', 77: 'teddy bear', 78: 'hair drier', 79: 'toothbrush'
-}
+
 
 IMAGE_KEY = os.getenv("IMAGE_KEY", "image")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -51,45 +37,21 @@ class image_Handler(oaas.Handler):
                 async with await ctx.load_main_file(session, IMAGE_KEY) as resp:
                     await write_to_file(resp, tmp_in)
                     
+                model = YOLO("yolov8n.pt")
 
-                # Run YOLOv5 detection
-                img_name = detect.run(source=tmp_in, project='runs/detect', name='exp', exist_ok=True, save_txt=True) 
+                # Run batched inference on a list of images
+                results = model([tmp_in])  # return a list of Results objects
+
+                # Process results list
+                for result in results:
+                    boxes = result.boxes  # Boxes object for bounding box outputs
+                    masks = result.masks  # Masks object for segmentation masks outputs
+                    keypoints = result.keypoints  # Keypoints object for pose outputs
+                    probs = result.probs  # Probs object for classification outputs
+                    obb = result.obb  # Oriented boxes object for OBB outputs
+                    result.show()  # display to screen
+                    result.save(filename="result.jpg")  # save to disk
                 
-
-                # Extract the image file and the label file after object detection
-                base_name = os.path.basename(img_name)
-                detect_img_file = os.path.splitext(base_name)[0] + '.jpg'
-                label_txt_file = os.path.splitext(base_name)[0] + '.txt'
-                
-                label_txt_file_path = os.path.join('runs', 'detect', 'exp', 'labels', label_txt_file)
-               
-                # Modify the label text file to analyze the information of the objects 
-                # detected from the image
-                with open(label_txt_file_path, "r") as label_file:
-                    lines = label_file.readlines()
-
-                modified_lines = []
-                object_counts = {name: 0 for name in COCO_CLASSES.values()}
-                for line in lines:
-                    parts = line.strip().split()
-                    class_id = int(parts[0])
-                    object_name = COCO_CLASSES[class_id]
-                    object_counts[object_name] += 1
-
-                    # Add explanations for the bounding box coordinates
-                    modified_line = f"{object_name} (class id {class_id}) center_x: {parts[1]}, center_y: {parts[2]}, width: {parts[3]}, height: {parts[4]}"
-                    modified_lines.append(modified_line)
-
-                with open("label_analysis.txt", "w") as label_output:
-                    for line in modified_lines:
-                        label_output.write(line + "\n")
-
-                objects_with_counts = [{"object_name": name, "count": count} for name, count in object_counts.items() if count > 0]
-
-                ctx.resp_body = { "image": detect_img_file, 
-                                  "label": label_txt_file,
-                                  "objects_with_counts": objects_with_counts
-                                }
                 
 
         finally:
